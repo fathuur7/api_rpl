@@ -6,7 +6,7 @@ import User from '../../models/userModel.js';
 
 const authController = {
   // Middleware to check authentication
-  isAuthenticated: (req, res, next) => {rm -rf .git
+  isAuthenticated: (req, res, next) => {
     
     if (req.isAuthenticated()) {
       return next();
@@ -68,7 +68,7 @@ const authController = {
       }
     });
   },
-
+  
   // Google OAuth Login Initiation
   googleLogin: passport.authenticate('google', { 
     scope: ['profile', 'email'] 
@@ -76,8 +76,8 @@ const authController = {
 
   // Google OAuth Callback
   googleCallback: passport.authenticate('google', { 
-    failureRedirect: '/login',
-    successRedirect: '/' 
+    failureRedirect: 'http://localhost:3000/login',
+    successRedirect: 'http://localhost:3000/home' 
   }),
 
   // Logout

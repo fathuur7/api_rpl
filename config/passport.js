@@ -1,22 +1,25 @@
-// config/passport.js
+import dotenv from 'dotenv';
 import passport from 'passport';
 import GoogleStrategy from 'passport-google-oauth20';
 import LocalStrategy from 'passport-local';
-import User from '../models/UserModel.js';
+import User from '../models/userModel.js';
 import bcrypt from 'bcrypt';
 
+dotenv.config();
 
 // Google OAuth Strategy
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/api/auth/google/callback"
+    callbackURL: "http://localhost:5000/api/auth/google/callback",
+    passReqToCallback: true, // Important for handling CORS
+    proxy: true // Handle potential proxy issues
   },
-  async (accessToken, refreshToken, profile, done) => {
+  async (req, accessToken, refreshToken, profile, done) => {
     try {
       // Check if user already exists
       let user = await User.findOne({ googleId: profile.id });
-
+      
       if (!user) {
         // Create new user if not exists
         user = new User({
@@ -26,10 +29,10 @@ passport.use(new GoogleStrategy({
           role: 'client', // Default role
           profilePhoto: profile._json.picture
         });
-
+        
         await user.save();
       }
-
+      
       return done(null, user);
     } catch (error) {
       return done(error, false);
@@ -44,18 +47,18 @@ passport.use(new LocalStrategy(
     try {
       // Find user by email
       const user = await User.findOne({ email });
-
+      
       if (!user) {
         return done(null, false, { message: 'Incorrect email.' });
       }
-
+      
       // Check password
       const isMatch = await bcrypt.compare(password, user.password);
       
       if (!isMatch) {
         return done(null, false, { message: 'Incorrect password.' });
       }
-
+      
       return done(null, user);
     } catch (error) {
       return done(error);
@@ -78,4 +81,4 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-module.exports = passport;
+export default passport;
