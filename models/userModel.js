@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
-<<<<<<< HEAD
   googleId: { 
     type: String, 
     unique: true,
@@ -40,54 +39,6 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: Date
 }, { 
   timestamps: true 
-=======
-    background : {
-        type: String,
-        // required: true
-    },
-    image : {
-        type: String,
-    },
-    location: {
-        type: String,
-        // required: true
-    },
-    aboutme : {
-        type: String,
-        // required: true
-    },
-    avalaible : {
-        type: String,
-        // required: true
-    },
-    name: {
-        type: String,
-        required: true
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    telegram: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    password: {
-        type: String,
-        required: true
-    },
-    role: {
-        type: String,
-        enum: ["user", "admin"],
-        default: "user"
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
->>>>>>> 49827e9c3e0e53bb0b03dbbffa28eb12d81bb6d4
 });
 
 // Hash password before saving
@@ -112,42 +63,6 @@ userSchema.methods.validatePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-<<<<<<< HEAD
 const User = mongoose.model('User', userSchema);
 
 export default User;
-=======
-// Fungsi untuk validasi menggunakan Joi
-export const validateUser = (data) => {
-    const schema = Joi.object({
-        name: Joi.string().min(3).max(40).required(),
-        email: Joi.string().email().required(),
-        telegram: Joi.string().min(3).required(),
-        password: Joi.string().min(6).required(),
-        role: Joi.string().valid("user", "admin").optional().default("user"), 
-        location: Joi.string().required(),
-        aboutme: Joi.string().required(),
-        avalaible: Joi.string().required(),
-        image: Joi.string().required(),
-    });
-    return schema.validate(data);
-};
-
-// Fungsi untuk validasi input login menggunakan Joi
-export const validateLogin = (data) => {
-    const schema = Joi.object({
-        email: Joi.string().email().required(),
-        password: Joi.string().required(),
-    });
-    return schema.validate(data);
-};
-
-userSchema.set("toJSON", { virtuals: true });
-userSchema.virtual("id").get(function () {
-    return this._id.toHexString();
-});
-
-const User = mongoose.model("User", userSchema);
-
-export default User;
->>>>>>> 49827e9c3e0e53bb0b03dbbffa28eb12d81bb6d4
