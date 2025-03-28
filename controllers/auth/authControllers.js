@@ -3,6 +3,8 @@ import passport from 'passport';
 import crypto from 'crypto';
 import User from '../../models/userModel.js';
 import nodemailer from 'nodemailer';
+import {sendVerificationEmail} from '../../config/verif.js';
+import cookieParser from 'cookie-parser';
 
 
 const authController = {
@@ -14,45 +16,70 @@ const authController = {
     }
     res.status(401).json({ message: 'Unauthorized' });
   },
-
+  
   // User Registration
   register: async (req, res) => {
     try {
       const { name, email, password, role } = req.body;
-
-      // Check if user already exists
+      
+      // Cek apakah email sudah digunakan
       let existingUser = await User.findOne({ email });
       if (existingUser) {
-        return res.status(400).json({ message: 'User already exists' });
+          return res.status(400).json({ message: 'User already exists' });
       }
 
-      // Create new user
+      // Buat token verifikasi
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+
+      // Buat user baru
       const newUser = new User({
-        name,
-        email,
-        password,
-        role: role || 'client'
+          name,
+          email,
+          password,
+          role: role || 'client',
+          verificationToken,
+          isVerified: false
       });
-
+      
       await newUser.save();
+      
+      // Kirim email verifikasi
+      const verificationLink = `http://localhost:3000/auth/makeSure/${verificationToken}`;
+      sendVerificationEmail(email, verificationLink);
 
-      // Optional: Send verification email
-      // Implement email verification logic here
-
-      res.status(201).json({ 
-        message: 'User registered successfully', 
-        user: { 
-          id: newUser._id, 
-          name: newUser.name, 
-          email: newUser.email, 
-          role: newUser.role
-        } 
+      res.status(201).json({
+          message: 'User registered successfully. Please check your email for verification.',
+          user: {
+              id: newUser._id,
+              name: newUser.name,
+              email: newUser.email,
+              role: newUser.role
+          }
       });
-    } catch (error) {
+  } catch (error) {
       res.status(500).json({ message: 'Error registering user', error: error.message });
+  }
+  },
+  
+  verifyEmail:async (req, res) => {
+    try {
+        const { token } = req.params;
+        const user = await User.findOne({ verificationToken: token });
+        
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired token' });
+        }
+        
+        user.isVerified = true;
+        await user.save();
+        
+        res.json({ message: 'Email verified successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error verifying email', error: error.message });
     }
   },
-
+  
+  
   // Local Login
   localLogin: passport.authenticate('local'),
   
@@ -74,23 +101,33 @@ const authController = {
   googleLogin: passport.authenticate('google', { 
     scope: ['profile', 'email'] 
   }),
-
+  
   // Google OAuth Callback
   googleCallback: passport.authenticate('google', { 
     failureRedirect: 'http://localhost:3000/login',
     successRedirect: 'http://localhost:3000/home' 
   }),
 
-  // Logout
   logout: (req, res) => {
+    if (req.cookies["connect.sid"]) {
+      res.clearCookie("connect.sid", { path: "/" }); // Hapus cookie session
+    }
+  
     req.logout((err) => {
       if (err) {
-        return res.status(500).json({ message: 'Error logging out' });
+        return res.status(500).json({ message: "Error logging out" });
       }
-      res.json({ message: 'Logged out successfully' });
+  
+      req.session.destroy((err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error destroying session" });
+        }
+        res.json({ message: "Logout successful" });
+      });
     });
   },
-
+  
+  
   // Get Current User
   getCurrentUser: (req, res) => {
     res.json({

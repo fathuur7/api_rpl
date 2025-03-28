@@ -8,7 +8,7 @@
     "start": "nodemon server.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon server.js",
-    "client": "cd ../rentapss && npm run dev"
+    "client": "cd ../rpl_project && npm run dev"
   },
   "keywords": [],
   "author": "",

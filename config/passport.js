@@ -19,17 +19,21 @@ passport.use(new GoogleStrategy({
     try {
       // Check if user already exists
       let user = await User.findOne({ googleId: profile.id });
+      // admin 
       
       if (!user) {
         // Create new user if not exists
+        const role = profile.emails[0].value === "kopisusu8ip@gmail.com" ? "designer" : "client";
+
+        // Buat user baru jika tidak ditemukan
         user = new User({
           googleId: profile.id,
           name: profile.displayName,
           email: profile.emails[0].value,
-          role: 'client', // Default role
+          role: role,
+          isVerified: true,
           profilePhoto: profile._json.picture
         });
-        
         await user.save();
       }
       
@@ -41,30 +45,37 @@ passport.use(new GoogleStrategy({
 ));
 
 // Local Strategy for Email/Password
-passport.use(new LocalStrategy(
-  { usernameField: 'email' },
-  async (email, password, done) => {
-    try {
-      // Find user by email
-      const user = await User.findOne({ email });
-      
-      if (!user) {
-        return done(null, false, { message: 'Incorrect email.' });
+passport.use(
+  new LocalStrategy(
+    { usernameField: 'email' },
+    async (email, password, done) => {
+      try {
+        // Cari user berdasarkan email
+        const user = await User.findOne({ email });
+        
+        if (!user) {
+          return done(null, false, { message: 'Incorrect email.' });
+        }
+
+        // Pastikan user memiliki password sebelum membandingkan
+        if (!user.password) {
+          return done(null, false, { message: 'Password not found.' });
+        }
+
+        // Bandingkan password yang diinput dengan yang ada di database
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+          return done(null, false, { message: 'Incorrect password.' });
+        }
+
+        return done(null, user);
+      } catch (error) {
+        return done(error);
       }
-      
-      // Check password
-      const isMatch = await bcrypt.compare(password, user.password);
-      
-      if (!isMatch) {
-        return done(null, false, { message: 'Incorrect password.' });
-      }
-      
-      return done(null, user);
-    } catch (error) {
-      return done(error);
     }
-  }
-));
+  )
+);
 
 // Serialize user for session
 passport.serializeUser((user, done) => {
