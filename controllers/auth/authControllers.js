@@ -2,6 +2,7 @@
 import passport from 'passport';
 import crypto from 'crypto';
 import User from '../../models/userModel.js';
+import nodemailer from 'nodemailer';
 
 
 const authController = {
@@ -44,7 +45,7 @@ const authController = {
           id: newUser._id, 
           name: newUser.name, 
           email: newUser.email, 
-          role: newUser.role 
+          role: newUser.role
         } 
       });
     } catch (error) {
@@ -121,8 +122,23 @@ const authController = {
       await user.save();
 
       // TODO: Implement email sending logic with nodemailer
-      // const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+      const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
       // Send email with reset link
+
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USERNAME,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USERNAME,
+        to: email,
+        subject: 'Password Reset Request',
+        text: `Click the following link to reset your password: ${resetLink}`
+      };
 
       res.json({ message: 'Password reset link sent' });
     } catch (error) {
