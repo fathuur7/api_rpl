@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import session from 'express-session';
 import passport from './config/passport.js';
 import categoryRoutes from "./routes/category/categoryRoutes.js";
+import userRoutes from "./routes/users/userRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -45,6 +46,7 @@ app.use(passport.session());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/users', userRoutes);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {

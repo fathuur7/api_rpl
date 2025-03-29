@@ -8,7 +8,7 @@ export const createCategory = async (req, res) => {
         if (!name) {
             return res.status(400).json({ message: "Category name is required" });
         }
-
+        
         const newCategory = new Category({ name });
         await newCategory.save();
 

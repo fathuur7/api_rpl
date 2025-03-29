@@ -1,16 +1,11 @@
 // crud routes
 import express from "express";
-import { getUserProfile } from "../../controllers/auth/authControllers.js";
-import authMiddleware from "../../middleware/authMiddleware.js";
-import { updateUser } from "../../controllers/auth/authControllers.js";
-// upload middleware
-import { uploadMultiple } from "../../config/uploadConfig.js";
+import { deleteUser, updateUser } from "../../controllers/user/userControllers.js";
 
 
 const router = express.Router();
 
-router.get("/me", authMiddleware, getUserProfile);
-
-router.put("/me/:id", uploadMultiple, updateUser);
+router.put("/:id", updateUser); // Update user
+router.delete("/:id", deleteUser); // Delete user
 
 export default router;
