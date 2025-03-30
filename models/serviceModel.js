@@ -1,6 +1,8 @@
+
+// models/ServiceRequest.js
 import mongoose from 'mongoose';
 
-const serviceSchema = new mongoose.Schema({
+const service = new mongoose.Schema({
   client: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
@@ -11,7 +13,7 @@ const serviceSchema = new mongoose.Schema({
     ref: 'Category', 
     required: true 
   },
-  name: { 
+  title: { 
     type: String, 
     required: true 
   },
@@ -19,35 +21,26 @@ const serviceSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
-  price: { 
+  budget: { 
     type: Number, 
     required: true 
   },
-  revisionLimit: { 
-    type: Number, 
-    default: 3 
-  },
-  deliveryTime: { 
-    type: Number, // dalam hari
+  deadline: { 
+    type: Date,
     required: true 
   },
-  images: [{ 
-    type: String,  // URL gambar layanan
-    validate: {
-      validator: function(v) {
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif)$/i.test(v);
-      },
-      message: props => `${props.value} is not a valid image URL!`
-    }
+  attachments: [{ 
+    type: String  // URL file referensi
   }],
   status: { 
     type: String, 
-    enum: ['pending', 'approved', 'declined'], 
-    default: 'pending' 
+    enum: ['open', 'assigned', 'completed', 'cancelled'], 
+    default: 'open' 
   }
 }, { 
   timestamps: true 
 });
 
-const Service = mongoose.model('Service', serviceSchema);
+
+const Service = mongoose.model('Service', service);
 export default Service;

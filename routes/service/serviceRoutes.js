@@ -1,20 +1,20 @@
+// import passport from '../../config/passport.js';
 import {
-    getAllServices,
-    getServiceById,
-    createService,
-    updateService,
-    deleteService,
-    updateServiceStatus
+    createServiceRequest,
+    getAllClientServiceRequests,
+    deleteServiceRequest,
+    getServiceRequest
 } from '../../controllers/service/serviceControllers.js';
 import express from 'express';
+import authMiddleware from '../../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', getAllServices); // Get all services
-router.post('/', createService); // Create a new service
-router.get('/:id', getServiceById); // Get service by ID
-router.put('/:id', updateService); // Update a service
-router.delete('/:id', deleteService); // Delete a service
-router.patch('/:id/status', updateServiceStatus); // Update service status (admin only)
+router.get('/', getAllClientServiceRequests, authMiddleware); // Get all services
+router.post('/', createServiceRequest); // Create a new service
+router.get('/:id', getServiceRequest); // Get a single service
+router.delete('/:id', deleteServiceRequest); // Delete a service
+
+// http://localhost:5000/api/services for get all services
 
 export default router;

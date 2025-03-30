@@ -1,240 +1,94 @@
-import express from 'express';
+
 import Service from '../../models/serviceModel.js';
-import User from '../../models/userModel.js';
 
-
-const router = express.Router();
-
-/**
- * @route   GET /api/services
- * @desc    Get all services
- * @access  Public
- */
-export const getAllServices = async (req, res) => {
+export const createServiceRequest = async (req, res) => {
   try {
-    const services = await Service.find()
-      .populate('client', 'name email')
-      .populate('category', 'name');
-    
-    res.json(services);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server Error' });
-  }
-}
-
-/**
- * @route   GET /api/services/:id
- * @desc    Get service by ID
- * @access  Public
- */
-export const getServiceById = async (req, res) => {
-  try {
-    const service = await Service.findById(req.params.id)
-      .populate('client', 'name email')
-      .populate('category', 'name');
-    
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized' });
     }
+      
+    const { category, title, description, budget, deadline, attachments } = req.body;
     
-    res.json(service);
-  } catch (error) {
-    console.error(error);
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-    res.status(500).json({ message: 'Server Error' });
-  }
-}
-
-/**
- * @route   POST /api/services
- * @desc    Create a new service
- * @access  Private
- */
-export const createService = async (req, res) => {
-  try {
-    const {
-      client,
+    const newServiceRequest = new Service({
+      client: req.user._id, 
       category,
-      name,
+      title,
       description,
-      price,
-      revisionLimit,
-      deliveryTime,
-      images
-    } = req.body;
-
-    // Create new service
-    const newService = new Service({
-      client,
-      category,
-      name,
-      description,
-      price,
-      revisionLimit,
-      deliveryTime,
-      images
+      budget,
+      deadline: new Date(deadline),
+      attachments,
+      status: 'open'
     });
-
-    const service = await newService.save();
-    res.status(201).json(service);
+    
+    const serviceRequest = await newServiceRequest.save();
+    res.status(201).json(serviceRequest);
   } catch (error) {
     console.error(error);
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(val => val.message);
-      return res.status(400).json({ message: messages });
-    }
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: 'Server error' });
   }
 }
 
-/**
- * @route   PUT /api/services/:id
- * @desc    Update a service
- * @access  Private
- */
-export const updateService = async (req, res) => {
+export const getAllClientServiceRequests = async (req, res) => {
   try {
-    const service = await Service.findById(req.params.id);
-    
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-    
-    // Update fields
-    const {
-      category,
-      name,
-      description,
-      price,
-      revisionLimit,
-      deliveryTime,
-      images,
-      status
-    } = req.body;
-
-    if (category) service.category = category;
-    if (name) service.name = name;
-    if (description) service.description = description;
-    if (price) service.price = price;
-    if (revisionLimit !== undefined) service.revisionLimit = revisionLimit;
-    if (deliveryTime) service.deliveryTime = deliveryTime;
-    if (images) service.images = images;
-    if (status) service.status = status;
-
-    const updatedService = await service.save();
-    res.json(updatedService);
+    console.log(req.user._id);
+    const serviceRequests = await Service.find({ client: req.user._id })
+      .populate('category', 'name')
+      .sort({ createdAt: -1 });
+      
+    res.json(serviceRequests);
   } catch (error) {
     console.error(error);
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(val => val.message);
-      return res.status(400).json({ message: messages });
-    }
-    res.status(500).json({ message: 'Server Error' });
-  }
-}
-
-/**
- * @route   DELETE /api/services/:id
- * @desc    Delete a service
- * @access  Private
- */
-export const deleteService = async (req, res) => {
-  try {
-    const service = await Service.findById(req.params.id);
-    
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-    
-    await service.remove();
-    res.json({ message: 'Service removed' });
-  } catch (error) {
-    console.error(error);
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-    res.status(500).json({ message: 'Server Error' });
-  }
-}
-
-/**
- * @route   GET /api/services/client/:clientId
- * @desc    Get all services for a specific client
- * @access  Private
- */
-export const getServicesByClient = async (req, res) => {
-  try {
-    const services = await Service.find({ client: req.params.clientId })
-      .populate('category', 'name');
-    
-    res.json(services);
-  } catch (error) {
-    console.error(error);
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Services not found' });
-    }
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-/**
- * @route   GET /api/services/category/:categoryId
- * @desc    Get all services for a specific category
- * @access  Public
- */
-export const getServicesByCategory = async (req, res) => {
-  try {
-    const services = await Service.find({ 
-      category: req.params.categoryId,
-      status: 'approved'
-    })
-      .populate('client', 'name')
-      .populate('category', 'name');
-    
-    res.json(services);
-  } catch (error) {
-    console.error(error);
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Services not found' });
-    }
-    res.status(500).json({ message: 'Server Error' });
-  }
-};  
 
-/**
- * @route   PATCH /api/services/:id/status
- * @desc    Update service status (admin only)
- * @access  Private/Admin
- */
-export const updateServiceStatus = async (req, res) => {
+export const getServiceRequest = async (req, res) => {
   try {
-    const { status } = req.body;
-    
-    if (!status || !['pending', 'approved', 'declined'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
+    const serviceRequest = await Service.findById(req.params.id)
+      .populate('client', 'name email profilePhoto')
+      .populate('category', 'name');
+      
+    if (!serviceRequest) {
+      return res.status(404).json({ message: 'Permintaan layanan tidak ditemukan' });
     }
     
-    const service = await Service.findById(req.params.id);
-    
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-    
-    service.status = status;
-    const updatedService = await service.save();
-    
-    res.json(updatedService);
+    res.json(serviceRequest);
   } catch (error) {
     console.error(error);
     if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Service not found' });
+      return res.status(404).json({ message: 'Permintaan layanan tidak ditemukan' });
     }
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: 'Server error' });
   }
-};
+}
+
+export const deleteServiceRequest = async (req, res) => {
+  try {
+    const serviceRequest = await Service.findById(req.params.id);
+    
+    if (!serviceRequest) {
+      return res.status(404).json({ message: 'Permintaan layanan tidak ditemukan' });
+    }
+    
+    // Verifikasi bahwa client adalah pemilik permintaan
+    if (serviceRequest.client.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Akses ditolak' });
+    }
+    
+    // Jika status sudah tidak 'open', tidak bisa dihapus
+    if (serviceRequest.status !== 'open') {
+      return res.status(400).json({ message: 'Permintaan yang sudah di-assign tidak dapat dihapus' });
+    }
+    
+    await serviceRequest.deleteOne();
+    
+    res.json({ message: 'Permintaan layanan berhasil dihapus' });
+  } catch (error) {
+    console.error(error);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({ message: 'Permintaan layanan tidak ditemukan' });
+    }
+    res.status(500).json({ message: 'Server error' });
+  }
+}
