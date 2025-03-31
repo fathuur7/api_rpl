@@ -3,7 +3,8 @@ import {
     createServiceRequest,
     getAllClientServiceRequests,
     deleteServiceRequest,
-    getServiceRequest
+    getServiceRequest,
+    updateServiceRequest
 } from '../../controllers/service/serviceControllers.js';
 import express from 'express';
 import authMiddleware from '../../middleware/authMiddleware.js';
@@ -14,6 +15,8 @@ router.get('/', getAllClientServiceRequests, authMiddleware); // Get all service
 router.post('/', createServiceRequest); // Create a new service
 router.get('/:id', getServiceRequest); // Get a single service
 router.delete('/:id', deleteServiceRequest); // Delete a service
+router.put('/:id', updateServiceRequest); // Update a service
+
 
 // http://localhost:5000/api/services for get all services
 

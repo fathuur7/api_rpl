@@ -92,3 +92,35 @@ export const deleteServiceRequest = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 }
+
+export const updateServiceRequest =  async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    
+    if (!service) {
+      return res.status(404).json({ message: 'Service request not found' });
+    }
+    
+    // Check if the user is the owner of the service request
+    if (service.client.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to update this service request' });
+    }
+    
+    const { category, title, description, budget, deadline, attachments, status } = req.body;
+    
+    // Only update fields that are provided
+    if (category) service.category = category;
+    if (title) service.title = title;
+    if (description) service.description = description;
+    if (budget) service.budget = budget;
+    if (deadline) service.deadline = deadline;
+    if (attachments) service.attachments = attachments;
+    if (status) service.status = status;
+    
+    const updatedService = await service.save();
+    
+    res.json(updatedService);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+}
