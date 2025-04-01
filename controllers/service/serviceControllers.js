@@ -42,10 +42,27 @@ export const getAllClientServiceRequests = async (req, res) => {
   }
 };
 
+export const getAllServiceRequestsDesainer = async (req, res) => {
+  try {
+    const serviceRequests = await Service.find({ status: 1 })
+      .populate('client', 'name email profilePhoto') // Tambahkan data client
+      .populate('category', 'name') // Tambahkan data kategori
+      
+    
+    res.status(200).json(serviceRequests);
+  } catch (error) {
+    console.error('Error fetching service requests:', error);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({ message: 'Permintaan layanan tidak ditemukan' });
+    }
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 
 export const getServiceRequest = async (req, res) => {
   try {
-    const serviceRequest = await Service.findById(req.params.id)
+    const serviceRequest = await Service.find(req.params.id)
       .populate('client', 'name email profilePhoto')
       .populate('category', 'name');
       
@@ -124,3 +141,5 @@ export const updateServiceRequest =  async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 }
+
+// get

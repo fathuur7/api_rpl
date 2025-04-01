@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-const authMiddleware = (req, res, next) => {
+export const authMiddleware = (req, res, next) => {
     const token = req.cookies.token;
 
     if (!token) {
@@ -16,4 +16,19 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
-export default authMiddleware;
+// middleware/checkRole.js
+export const checkRole = (role) => {
+    return (req, res, next) => {
+      if (!req.user) {
+        return res.status(401).json({ msg: 'Not authorized' });
+      }
+  
+      if (req.user.role !== role) {
+        return res.status(403).json({ msg: 'Not authorized as ' + role });
+      }
+  
+      next();
+    };
+  };
+  
+

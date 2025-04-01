@@ -6,17 +6,13 @@ import {
     getServiceRequest,
     updateServiceRequest
     // getAllOpenServiceRequests
-} from '../../controllers/service/serviceControllers.js';
+} from '../../controllers/service/serviceControllersDesainer.js';
 import express from 'express';
-import {authMiddleware} from '../../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', getAllClientServiceRequests, authMiddleware); // Get all services
-router.post('/', createServiceRequest); // Create a new service
-router.get('/:id', getServiceRequest); // Get a single service
-router.delete('/:id', deleteServiceRequest); // Delete a service
-router.put('/:id', updateServiceRequest); // Update a service
+router.get('/', getServiceRequest); // Get a single service
+
 
 // router.get('/open', getAllOpenServiceRequests); // Get all open services
 
