@@ -17,7 +17,8 @@ export const createServiceRequest = async (req, res) => {
       budget,
       deadline: new Date(deadline),
       attachments,
-      status: 'open'
+      status: 'open',
+      makRevisions: 3
     });
     
     const serviceRequest = await newServiceRequest.save();
@@ -42,27 +43,11 @@ export const getAllClientServiceRequests = async (req, res) => {
   }
 };
 
-export const getAllServiceRequestsDesainer = async (req, res) => {
-  try {
-    const serviceRequests = await Service.find({ status: 1 })
-      .populate('client', 'name email profilePhoto') // Tambahkan data client
-      .populate('category', 'name') // Tambahkan data kategori
-      
-    
-    res.status(200).json(serviceRequests);
-  } catch (error) {
-    console.error('Error fetching service requests:', error);
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Permintaan layanan tidak ditemukan' });
-    }
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
 
 
 export const getServiceRequest = async (req, res) => {
   try {
-    const serviceRequest = await Service.find(req.params.id)
+    const serviceRequest = await Service.find({_id: req.params.id})
       .populate('client', 'name email profilePhoto')
       .populate('category', 'name');
       

@@ -36,7 +36,11 @@ const service = new mongoose.Schema({
     type: String, 
     enum: ['open', 'assigned', 'completed', 'cancelled'], 
     default: 'open' 
-  }
+  },
+  maxRevisions: {
+    type: Number,
+    default: 3
+  },
 }, { 
   timestamps: true 
 });
