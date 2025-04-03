@@ -24,7 +24,7 @@ router.post('/create', async (req, res) => {
     const { orderId, amount, paymentMethod, client, midtransResponse } = req.body;
     
     // Validate order existence
-    const order = await Order.findById(orderId)
+    const order = await Order.find({ _id: orderId })
       .populate('client', 'email name')
       .populate('designer', 'email name');
     

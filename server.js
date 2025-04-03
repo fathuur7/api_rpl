@@ -12,6 +12,7 @@ import serviceRoutes from "./routes/service/serviceRoutes.js";
 import designerServiceRoutes from "./controllers/service/serviceControllersDesainer.js";
 import orderRoutes from "./routes/orders/orderRoutes.js";
 import paymentRoutes from "./routes/payment/paymentRoutes.js";
+import payment from "./routes/payment/payment.js";
 
 dotenv.config();
 const app = express();
@@ -63,6 +64,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/designer', designerServiceRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('api/payment', paymentRoutes);
+app.use('/api/payment', payment);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {

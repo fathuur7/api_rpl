@@ -114,36 +114,5 @@ router.put('/:id/status', auth, async (req, res) => {
   }
 });
 
-// @route   PUT api/orders/:id/payment
-// @desc    Update payment status
-// @access  Private (client only)
-router.put('/:id/payment', auth, async (req, res) => {
-  try {
-    let order = await Order.findById(req.params.id);
-    
-    if (!order) {
-      return res.status(404).json({ msg: 'Order not found' });
-    }
-    
-    // Only client can mark as paid
-    if (order.client.toString() !== req.user.id) {
-      return res.status(401).json({ msg: 'Not authorized' });
-    }
-    
-    // Update payment status
-    order.isPaid = true;
-    await order.save();
-    
-    res.json(order);
-  } catch (err) {
-    console.error(err.message);
-    
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ msg: 'Order not found' });
-    }
-    
-    res.status(500).send('Server Error');
-  }
-});
 
 export default router;
