@@ -182,7 +182,7 @@ router.put('/services/:id/apply', isDesigner, async (req, res) => {
           `
         };
         
-        const paymentLink = `${process.env.FRONTEND_URL}/payment/${newOrder._id}`;
+        const paymentLink = `${process.env.FRONTEND_URL}/notif`;
         
         const clientMailOptions = {
           from: process.env.EMAIL_USERNAME,

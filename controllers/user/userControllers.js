@@ -40,6 +40,22 @@ export const updateUser = async (req, res) => {
   }
 };
 
+
+// get all users
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    console.error('Error getting users:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to get users',
+      error: error.message 
+    });
+  }
+};
+
 // Delete user
 export const deleteUser = async (req, res) => {
   try {
