@@ -6,6 +6,10 @@ WORKDIR /
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
+# Copy server.js
+COPY server.js ./
+# Copy the rest of the app
+
 
 # Install dependencies
 RUN npm install
