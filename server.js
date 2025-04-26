@@ -65,6 +65,11 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/deliverables', deliverableRoutes);
 
 
+app.get('/', (req, res) => {
+  res.status(200).json({ message: "Welcome to the API" });
+});
+
+
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
