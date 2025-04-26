@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+// models/deliverableModel.js
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const deliverableSchema = new Schema({

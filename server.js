@@ -12,7 +12,7 @@ import serviceRoutes from "./routes/service/serviceRoutes.js";
 import designerServiceRoutes from "./controllers/service/serviceControllersDesainer.js";
 import orderRoutes from "./routes/orders/orderRoutes.js";
 import paymentRoutes from "./routes/payment/paymentRoutes.js";
-
+import deliverableRoutes from "./routes/delivare/delivRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -29,7 +29,7 @@ app.use(cookieParser());
 
 // CORS Middleware
 const corsOptions = {
-  origin: "http://localhost:3000", // Hapus duplikasi
+  origin: "http://localhost:3000",
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
@@ -64,6 +64,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/designer', designerServiceRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/deliverables', deliverableRoutes);
 
 
 // Error Handling Middleware
