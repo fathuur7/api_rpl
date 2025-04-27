@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from 'express-session';
+import MongoStore from 'connect-mongo';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
@@ -61,7 +62,7 @@ app.use(morgan(isProduction ? 'combined' : 'dev'));
 // CORS configuration
 const corsOptions = {
   origin: isProduction 
-    ? [process.env.CLIENT_URL] 
+    ? [process.env.FRONTEND_URL] 
     : ["http://localhost:3000", "http://127.0.0.1:3000"],
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -70,14 +71,20 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Session configuration
+// Session configuration with MongoDB store
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    ttl: 14 * 24 * 60 * 60, // 14 days in seconds
+    autoRemove: 'native', // Default
+    touchAfter: 24 * 3600 // Refresh only one time per 24 hours
+  }),
   cookie: { 
     secure: isProduction, 
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
     httpOnly: true,
     sameSite: isProduction ? 'strict' : 'lax' // CSRF protection
   }
