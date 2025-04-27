@@ -63,12 +63,13 @@ app.use(morgan(isProduction ? 'combined' : 'dev'));
 
 // CORS configuration
 const corsOptions = {
-  origin: "localhost:3000",
+  origin: "http://localhost:3000",
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
   maxAge: 86400 // Cache preflight requests for 24 hours
 };
+
 app.use(cors(corsOptions));
 
 // Session configuration with MongoDB store
