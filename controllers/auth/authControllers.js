@@ -9,13 +9,13 @@ import {sendVerificationEmail} from '../../config/verif.js';
 
 const authController = {
   // Middleware to check authentication
-  isAuthenticated: (req, res, next) => {
+  // isAuthenticated: (req, res, next) => {
     
-    if (req.isAuthenticated()) {
-      return next();
-    }
-    res.status(401).json({ message: 'Unauthorized' });
-  },
+  //   if (req.isAuthenticated()) {
+  //     return next();
+  //   }
+  //   res.status(401).json({ message: 'Unauthorized' });
+  // },
   
   // User Registration
   register: async (req, res) => {
