@@ -61,9 +61,7 @@ app.use(morgan(isProduction ? 'combined' : 'dev'));
 
 // CORS configuration
 const corsOptions = {
-  origin: isProduction 
-    ? [process.env.FRONTEND_URL] 
-    : ["http://localhost:3000", "http://127.0.0.1:3000"],
+  origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
