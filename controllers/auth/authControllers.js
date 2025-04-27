@@ -154,7 +154,17 @@ const authController = {
       }
       
       const token = authController.generateToken(user._id);
-      res.redirect(`http://localhost:3000/home?token=${token}`);
+      res.json({
+        message: 'Login successful',
+        token,
+        user: {
+          id: req.user._id,
+          name: req.user.name,
+          email: req.user.email,
+          role: req.user.role,
+          profilePhoto: req.user.profilePhoto || null
+        }
+      });
     })(req, res, next);
   },
 
