@@ -61,7 +61,7 @@ app.use(morgan(isProduction ? 'combined' : 'dev'));
 
 // CORS configuration
 const corsOptions = {
-  origin: "*",
+  origin: "localhost:3000",
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
