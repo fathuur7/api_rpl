@@ -94,6 +94,12 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use((req, res, next) => {
+  console.log('User from session:', req.user);
+  next();
+});
+
+
 // Development logging middleware
 if (!isProduction) {
   app.use((req, res, next) => {
