@@ -29,6 +29,8 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
+
+app.set('trust proxy', 1);
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Connect to MongoDB
@@ -82,7 +84,7 @@ app.use(session({
     secure: true, 
     maxAge: 14 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    sameSite: 'lax' // Use 'lax' for cross-domain during development
+    sameSite: 'lax' 
   }
 }));
 
