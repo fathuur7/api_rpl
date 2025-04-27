@@ -79,7 +79,7 @@ app.use(session({
     ttl: 14 * 24 * 60 * 60
   }),
   cookie: { 
-    secure: false, 
+    secure: true, 
     maxAge: 14 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax' // Use 'lax' for cross-domain during development
