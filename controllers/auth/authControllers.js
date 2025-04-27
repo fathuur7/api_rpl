@@ -139,19 +139,18 @@ const authController = {
   
   // Google OAuth Login Initiation
   googleLogin: passport.authenticate('google', { 
-    scope: ['profile', 'email'],
-    session: true
+    scope: ['profile', 'email']
   }),
   
   // Google OAuth Callback with JWT
   googleCallback: (req, res, next) => {
-    passport.authenticate('google', { session: false }, (err, user, info) => {
+    passport.authenticate('google', { session: true }, (err, user, info) => {
       if (err) {
         return next(err);
       }
       
       if (!user) {
-        return res.redirect('http://localhost:3000/auth/login`;');
+        return res.redirect('http://localhost:3000/auth/login');
       }
       
       const token = authController.generateToken(user._id);
