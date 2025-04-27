@@ -29,7 +29,7 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'development';
 
 // Connect to MongoDB
 connectDB();
