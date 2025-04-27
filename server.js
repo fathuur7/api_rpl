@@ -35,8 +35,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 connectDB();
 
 // Security middleware
-app.use(helmet()); // Helps secure Express apps by setting HTTP headers
-app.disable('x-powered-by'); // Reduces fingerprinting
+// app.use(helmet()); // Helps secure Express apps by setting HTTP headers
+// app.disable('x-powered-by'); // Reduces fingerprinting
 
 // Rate limiting to prevent abuse
 const limiter = rateLimit({
@@ -57,7 +57,7 @@ app.use(cookieParser());
 app.use(compression());
 
 // Logging
-app.use(morgan(isProduction ? 'combined' : 'dev'));
+// app.use(morgan(isProduction ? 'combined' : 'dev'));
 
 // CORS configuration
 const corsOptions = {
@@ -76,15 +76,13 @@ app.use(session({
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
-    ttl: 14 * 24 * 60 * 60, // 14 days in seconds
-    autoRemove: 'native', // Default
-    touchAfter: 24 * 3600 // Refresh only one time per 24 hours
+    ttl: 14 * 24 * 60 * 60
   }),
   cookie: { 
-    secure: process.env.NODE_ENV === 'production', // Only true in production
+    secure: false, // Set to false for localhost development
     maxAge: 14 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    sameSite: 'lax' // Use 'lax' for cross-domain during development
   }
 }));
 
@@ -94,6 +92,12 @@ app.use(passport.session());
 
 app.use((req, res, next) => {
   console.log('User from session:', req.user);
+  console.log('Request URL:', req.originalUrl);
+  console.log('Request Method:', req.method);
+  console.log('Request Headers:', req.headers);
+  console.log('Request Body:', req.body);
+  console.log('Request Cookies:', req.cookies);
+  console.log('Request Params:', req.params);
   next();
 });
 
