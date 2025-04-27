@@ -29,7 +29,7 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
-const isProduction = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Connect to MongoDB
 connectDB();
@@ -61,7 +61,7 @@ app.use(morgan(isProduction ? 'combined' : 'dev'));
 
 // CORS configuration
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+  origin: ["http://localhost:3000", "http://127.0.0.1:3000","https://apirpl-production.up.railway.app"],
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
@@ -81,10 +81,10 @@ app.use(session({
     touchAfter: 24 * 3600 // Refresh only one time per 24 hours
   }),
   cookie: { 
-    secure : true, // Set to true in production
-    maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+    secure: process.env.NODE_ENV === 'production', // Only true in production
+    maxAge: 14 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    sameSite: 'none' 
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   }
 }));
 
