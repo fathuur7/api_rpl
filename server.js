@@ -35,8 +35,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 connectDB();
 
 // Security middleware
-// app.use(helmet()); // Helps secure Express apps by setting HTTP headers
-// app.disable('x-powered-by'); // Reduces fingerprinting
+app.use(helmet()); // Helps secure Express apps by setting HTTP headers
+app.disable('x-powered-by'); // Reduces fingerprinting
 
 // Rate limiting to prevent abuse
 const limiter = rateLimit({
@@ -56,8 +56,8 @@ app.use(cookieParser());
 // Compression for better performance
 app.use(compression());
 
-// Logging
-// app.use(morgan(isProduction ? 'combined' : 'dev'));
+Logging
+app.use(morgan(isProduction ? 'combined' : 'dev'));
 
 // CORS configuration
 const corsOptions = {
