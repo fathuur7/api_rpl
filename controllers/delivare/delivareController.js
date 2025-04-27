@@ -30,7 +30,7 @@ const uploadToLocal = async (file) => {
     fs.writeFileSync(filePath, file.buffer);
     
     // Generate the URL (relative path for mongoose)
-    const relativePath = `/uploads/deliverables/${fileName}`;
+    const relativePath = `/uploads/${fileName}`;
     
     return { fileUrl: relativePath, path: relativePath };
   } catch (error) {
@@ -65,7 +65,7 @@ export const createDeliverable = async (req, res) => {
     // Create deliverable
     const deliverable = new Deliverable({
       orderId,
-    //   desainer: req.user._id, // From the authenticated user
+      desainer: req.user._id, // From the authenticated user
       title,
       description,
       fileUrl,
