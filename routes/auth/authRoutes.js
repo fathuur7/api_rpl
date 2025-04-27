@@ -1,5 +1,4 @@
-// Initialize express router
-// Import express
+
 import express from 'express';
 import authController from '../../controllers/auth/authControllers.js';
 import { auth } from '../../middleware/authMiddleware.js';

@@ -82,7 +82,7 @@ app.use(session({
     ttl: 14 * 24 * 60 * 60
   }),
   cookie: { 
-    secure: true, 
+    secure: false, 
     maxAge: 14 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax' 
