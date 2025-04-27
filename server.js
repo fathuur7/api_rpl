@@ -56,7 +56,7 @@ app.use(cookieParser());
 // Compression for better performance
 app.use(compression());
 
-Logging
+// Logging
 app.use(morgan(isProduction ? 'combined' : 'dev'));
 
 // CORS configuration
