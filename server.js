@@ -61,7 +61,7 @@ app.use(compression());
 
 // CORS configuration
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://127.0.0.1:3000","https://apirpl-production.up.railway.app"],
+  origin: "*",
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
@@ -79,7 +79,7 @@ app.use(session({
     ttl: 14 * 24 * 60 * 60
   }),
   cookie: { 
-    secure: false, // Set to false for localhost development
+    secure: false, 
     maxAge: 14 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax' // Use 'lax' for cross-domain during development
