@@ -86,7 +86,7 @@ app.use(session({
     secure: isProduction, 
     maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
     httpOnly: true,
-    sameSite: isProduction ? 'strict' : 'lax' // CSRF protection
+    sameSite: 'none'
   }
 }));
 
