@@ -81,10 +81,10 @@ app.use(session({
     touchAfter: 24 * 3600 // Refresh only one time per 24 hours
   }),
   cookie: { 
-    secure: isProduction, 
+    secure : false, // Set to true in production
     maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
     httpOnly: true,
-    sameSite: isProduction ? 'strict' : 'lax' // CSRF protection
+    sameSite: 'lax' 
   }
 }));
 
