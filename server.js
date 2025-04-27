@@ -1,85 +1,143 @@
+// app.js or server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import connectDB from "./config/db.js";
-import authRoutes from "./routes/auth/authRoutes.js";
 import cookieParser from "cookie-parser";
 import session from 'express-session';
+import helmet from 'helmet';
+import compression from 'compression';
+import morgan from 'morgan';
+import { rateLimit } from 'express-rate-limit';
+
+// Configuration imports
+import connectDB from "./config/db.js";
 import passport from './config/passport.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandlers.js';
+
+// Route imports
+import authRoutes from "./routes/auth/authRoutes.js";
 import categoryRoutes from "./routes/category/categoryRoutes.js";
 import userRoutes from "./routes/users/userRoutes.js";
 import serviceRoutes from "./routes/service/serviceRoutes.js";
-import designerServiceRoutes from "./controllers/service/serviceControllersDesainer.js";
+import designerServiceRoutes from "./routes/service/serviceDesainerRoutes.js";
 import orderRoutes from "./routes/orders/orderRoutes.js";
 import paymentRoutes from "./routes/payment/paymentRoutes.js";
 import deliverableRoutes from "./routes/delivare/delivRoutes.js";
 
+// Load environment variables
 dotenv.config();
+
+// Initialize Express app
 const app = express();
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Connect to MongoDB
 connectDB();
 
-// Middleware
+// Security middleware
+app.use(helmet()); // Helps secure Express apps by setting HTTP headers
+app.disable('x-powered-by'); // Reduces fingerprinting
+
+// Rate limiting to prevent abuse
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api/', limiter);
+
+// Request parsing
 app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true , limit: '50mb'}));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
-// CORS Middleware
+// Compression for better performance
+app.use(compression());
+
+// Logging
+app.use(morgan(isProduction ? 'combined' : 'dev'));
+
+// CORS configuration
 const corsOptions = {
-  origin: "*",
+  origin: isProduction 
+    ? [process.env.CLIENT_URL] 
+    : ["http://localhost:3000", "http://127.0.0.1:3000"],
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
+  maxAge: 86400 // Cache preflight requests for 24 hours
 };
 app.use(cors(corsOptions));
 
+// Session configuration
 app.use(session({
-  secret: process.env.SESSION_SECRET, 
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: process.env.NODE_ENV === 'production', 
-    maxAge: 24 * 60 * 60 * 1000, // 24 jam
-    httpOnly: true // Tambahkan httpOnly untuk keamanan
+    secure: isProduction, 
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true,
+    sameSite: isProduction ? 'strict' : 'lax' // CSRF protection
   }
 }));
 
+// Authentication
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use((req, res, next) => {
-  console.log('User from session:', req.user);
-  next();
+// Development logging middleware
+if (!isProduction) {
+  app.use((req, res, next) => {
+    console.log('User from session:', req.user);
+    next();
+  });
+}
+
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', environment: process.env.NODE_ENV });
 });
 
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/designer', designerServiceRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/deliverables', deliverableRoutes);
-
-
+// API Routes
 app.get('/', (req, res) => {
-  res.status(200).json({ message: "Welcome to the API" });
+  res.status(200).json({ message: "Welcome to the API", version: "1.0.0" });
 });
 
+// Mount route modules
+const apiRoutes = express.Router();
+apiRoutes.use('/auth', authRoutes);
+apiRoutes.use('/categories', categoryRoutes);
+apiRoutes.use('/users', userRoutes);
+apiRoutes.use('/services', serviceRoutes);
+apiRoutes.use('/designer', designerServiceRoutes);
+apiRoutes.use('/orders', orderRoutes);
+apiRoutes.use('/payments', paymentRoutes);
+apiRoutes.use('/deliverables', deliverableRoutes);
 
-// Error Handling Middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Internal Server Error", error: err.message });
-});
+
+// Apply API routes with versioning
+app.use('/api/v1', apiRoutes);
+
+// Error Handling
+app.use(notFoundHandler); // Handle 404 errors
+app.use(errorHandler); // Global error handler
 
 // Start the server
 const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+const server = app.listen(port, () => {
+  console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${port}`);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! 💥 Shutting down...');
+  console.error(err.name, err.message);
+  server.close(() => {
+    process.exit(1);
+  });
 });
 
 export default app;

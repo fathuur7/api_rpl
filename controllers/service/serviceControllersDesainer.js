@@ -1,30 +1,16 @@
 import nodemailer from 'nodemailer';
+import {sendCancellationEmail} from '../../config/email.js';
 import Order from '../../models/orderModel.js';
 import User from '../../models/userModel.js';
 import dotenv from 'dotenv';
-import express from 'express';
 import Service from '../../models/serviceModel.js';
+
+
 dotenv.config();
-const router = express.Router();
 
-
-
-// Helper middleware to check if user is authenticated and is a designer
-const isDesigner = (req, res, next) => {
-  // Check if authenticated (Passport adds user to req)
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ msg: 'You must be logged in' });
-  }
-  
-  // Check if user has designer role
-  if (req.user.role !== 'designer') {
-    return res.status(403).json({ msg: 'Access denied. Not authorized as designer' });
-  }
-  
-  next();
-};
-
-router.put('/:id/cancel', isDesigner, async (req, res) => {
+// Apply for a service request as a designer 
+// router.put('Cancel/:id/', isDesigner, )
+export const CancelService = async (req, res) => {
   try {
     const serviceId = req.params.id;
     
@@ -36,8 +22,6 @@ router.put('/:id/cancel', isDesigner, async (req, res) => {
     }
     
     // Check if user is authorized to cancel (should be the assigned designer)
-    // There's a syntax error in your original code - double dots
-    // Assuming you have a designer field in your Service model 
     if (service.designer && service.designer.toString() !== req.user.id) {
       return res.status(403).json({ msg: 'Not authorized to cancel this service' });
     }
@@ -79,46 +63,6 @@ router.put('/:id/cancel', isDesigner, async (req, res) => {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
-});
-
-/**
- * Helper function to send cancellation email to client
- */
-const sendCancellationEmail = async ({ clientEmail, clientName, serviceTitle, serviceId, designerName }) => {
-  try {
-    // Create a test account if you don't have actual email credentials
-    // For production, use your actual email service credentials
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD
-      }
-    });
-    
-    // Send mail with defined transport object
-    const info = await transporter.sendMail({
-      from: '"Service Platform" <notifications@yourplatform.com>',
-      to: clientEmail,
-      subject: `Service Cancellation: ${serviceTitle}`,
-      html: `
-        <h2>Service Cancellation Notice</h2>
-        <p>Hello ${clientName},</p>
-        <p>We regret to inform you that the service <strong>${serviceTitle}</strong> (ID: ${serviceId}) has been cancelled by the designer ${designerName}.</p>
-        <p>Please contact the administrator if you have any questions.</p>
-        <p>Thank you for your understanding.</p>
-        <p>Best regards,<br>The Service Platform Team</p>
-        <p>Please chat with us at <a href="https://t.me/YourBoy8w">Telegram</a> for any questions.</p>
-      `
-    });
-    
-    console.log('Email sent: %s', info.messageId);
-    return info;
-    
-  } catch (error) {
-    console.error('Error sending email:', error);
-    // Note: We're not throwing the error here so the API doesn't fail if email fails
-  }
 };
 
 /**
@@ -126,7 +70,7 @@ const sendCancellationEmail = async ({ clientEmail, clientName, serviceTitle, se
  * @desc     Get all service requests (for designers)
  * @access   Private (designers only)
  */
-router.get('/services', isDesigner, async (req, res) => {
+export const getAllDesignerServiceRequests = async (req, res) => {
   try {
     const services = await Service.find({ status: { $in: ['open', 'assigned'] } })
       .populate('client', 'name email')
@@ -137,14 +81,14 @@ router.get('/services', isDesigner, async (req, res) => {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
-});
+};
 
 /**
  * @route    GET /api/designer/services/:id
  * @desc     Get service request by ID (for designers)
  * @access   Private (designers only)
  */
-router.get('/services/:id', isDesigner, async (req, res) => {
+export const getDesignerServiceRequestById = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id)
       .populate('client', 'name email')
@@ -164,14 +108,14 @@ router.get('/services/:id', isDesigner, async (req, res) => {
     
     res.status(500).send('Server Error');
   }
-});
+};
 
 /**
  * @route    GET /api/designer/services/category/:categoryId
  * @desc     Get service requests by category (for designers)
  * @access   Private (designers only)
  */
-router.get('/services/category/:categoryId', isDesigner, async (req, res) => {
+export const getDesignerServiceRequestsByCategory = async (req, res) => {
   try {
     const services = await Service.find({ 
       category: req.params.categoryId,
@@ -185,7 +129,7 @@ router.get('/services/category/:categoryId', isDesigner, async (req, res) => {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
-});
+};
 
 /**
  * @route    PUT /api/designer/services/:id/apply
@@ -194,18 +138,7 @@ router.get('/services/category/:categoryId', isDesigner, async (req, res) => {
  */
 
 
-// Configure email transporter
-const transporter = nodemailer.createTransport({
-  // Configure your email provider settings here
-  // Example for Gmail:
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USERNAME,
-    pass: process.env.EMAIL_PASSWORD
-  }
-});
-
-router.put('/services/:id/apply', isDesigner, async (req, res) => {
+export const applyForServiceRequest = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id)
       .populate('client', 'email name');
@@ -324,5 +257,4 @@ router.put('/services/:id/apply', isDesigner, async (req, res) => {
     
     res.status(500).send('Server Error');
   }
-});
-export default router;
+};

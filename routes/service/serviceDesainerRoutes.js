@@ -1,22 +1,21 @@
 // import passport from '../../config/passport.js';
 import {
-    createServiceRequest,
-    getAllClientServiceRequests,
-    deleteServiceRequest,
-    getServiceRequest,
-    updateServiceRequest
-    // getAllOpenServiceRequests
+    CancelService,
+    getAllDesignerServiceRequests,
+    getDesignerServiceRequestById,
+    getDesignerServiceRequestsByCategory,
+    applyForServiceRequest
 } from '../../controllers/service/serviceControllersDesainer.js';
 import express from 'express';
+import { isDesigner } from '../../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', getServiceRequest); // Get a single service
+router.put('/services/:id/apply', isDesigner, applyForServiceRequest); 
+router.get('/services/category/:categoryId', isDesigner, getDesignerServiceRequestsByCategory); 
+router.get('/services/:id', isDesigner, getDesignerServiceRequestById); 
+router.get('/services', isDesigner, getAllDesignerServiceRequests); 
+router.put('/services/:id/cancel', isDesigner, CancelService); // Apply for a service request
 
-
-// router.get('/open', getAllOpenServiceRequests); // Get all open services
-
-
-// http://localhost:5000/api/services/desainer for get all services
 
 export default router;

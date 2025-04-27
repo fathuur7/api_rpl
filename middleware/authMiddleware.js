@@ -55,4 +55,16 @@ export const checkRole = (role) => {
     };
   };
   
-
+// Helper middleware to check if user is authenticated and is a designer
+export const isDesigner = (req, res, next) => {
+  // Check if authenticated (Passport adds user to req)
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ msg: 'You must be logged in' });
+  }
+  
+  // Check if user has designer role
+  if (req.user.role !== 'designer') {
+    return res.status(403).json({ msg: 'Access denied. Not authorized as designer' });
+  }
+  next();
+};
