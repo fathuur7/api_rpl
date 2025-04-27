@@ -13,7 +13,6 @@ import { rateLimit } from 'express-rate-limit';
 import connectDB from "./config/db.js";
 import passport from './config/passport.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandlers.js';
-
 // Route imports
 import authRoutes from "./routes/auth/authRoutes.js";
 import categoryRoutes from "./routes/category/categoryRoutes.js";
