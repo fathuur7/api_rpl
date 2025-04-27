@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import User from '../../models/userModel.js';
 import nodemailer from 'nodemailer';
 import {sendVerificationEmail} from '../../config/verif.js';
-import cookieParser from 'cookie-parser';
+
 
 
 const authController = {
