@@ -1,40 +1,52 @@
 // controllers/deliverableController.js
 import Deliverable from '../../models/delivareModel.js';
 import Order from '../../models/orderModel.js';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+import dotenv from 'dotenv';
+import { NotifyDeliverableStatusEmail } from '../../config/email.js';
+import logger from '../../utils/logger.js';
 
-// Get current file directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+dotenv.config();
 
-// Create upload directory path (uploads/deliverables)
-const uploadsDir = path.join(__dirname, '..', 'uploads', 'deliverables');
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+  secure: true,
+});
 
-// Ensure uploads directory exists
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Helper function for file uploads to local storage
-const uploadToLocal = async (file) => {
+// Helper function for file uploads to Cloudinary
+const uploadToCloudinary = async (file) => {
   try {
-    // Generate a unique filename
-    const timestamp = Date.now();
-    const fileName = `${timestamp}-${file.originalname}`;
-    const filePath = path.join(uploadsDir, fileName);
+    const { originalname, buffer } = file;
     
-    // Write the file to the uploads directory
-    fs.writeFileSync(filePath, file.buffer);
+    // Convert buffer to base64 string for Cloudinary upload
+    const b64 = Buffer.from(buffer).toString('base64');
+    const dataURI = `data:${file.mimetype};base64,${b64}`;
     
-    // Generate the URL (relative path for mongoose)
-    const relativePath = `/uploads/${fileName}`;
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: 'deliverables',
+      resource_type: 'auto',
+      public_id: `deliverable-${Date.now()}-${originalname.split('.')[0]}`,
+    });
     
-    return { fileUrl: relativePath, path: relativePath };
+    return { 
+      fileUrl: result.secure_url, 
+      publicId: result.public_id 
+    };
   } catch (error) {
-    throw new Error(`Error uploading file: ${error.message}`);
+    throw new Error(`Failed to upload file to Cloudinary: ${error.message}`);
+  }
+};
+
+// Helper function to delete file from Cloudinary
+const deleteFromCloudinary = async (publicId) => {
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    throw new Error(`Failed to delete file from Cloudinary: ${error.message}`);
   }
 };
 
@@ -49,18 +61,18 @@ export const createDeliverable = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
     
-    // // Check if the designer is assigned to this order
-    // if (order.designer.toString() !== req.user._id.toString()) {
-    //   return res.status(403).json({ message: 'You are not authorized to submit deliverables for this order' });
-    // }
+    // Check if the designer is assigned to this order
+    if (order.designer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You are not authorized to submit deliverables for this order' });
+    }
     
     // Check if there's a file in the request
     if (!req.file) {
       return res.status(400).json({ message: 'File is required' });
     }
     
-    // Upload file to local storage
-    const { fileUrl, path: filePath } = await uploadToLocal(req.file);
+    // Upload file to Cloudinary
+    const { fileUrl, publicId } = await uploadToCloudinary(req.file);
     
     // Create deliverable
     const deliverable = new Deliverable({
@@ -69,7 +81,7 @@ export const createDeliverable = async (req, res) => {
       title,
       description,
       fileUrl,
-      path: filePath,
+      publicId, 
       submittedAt: new Date()
     });
     
@@ -77,7 +89,7 @@ export const createDeliverable = async (req, res) => {
     
     // Update the order status if needed
     if (order.status === 'in_progress') {
-      order.status = 'awaiting_payment';
+      order.status = 'revision'; 
       await order.save();
     }
     
@@ -189,21 +201,21 @@ export const updateDeliverable = async (req, res) => {
     const updateData = {
       title: title || deliverable.title,
       description: description || deliverable.description,
-      submittedAt: new Date() // Update submission time
+      submittedAt: new Date(), // Update submission time,
+      status: 'PENDING' // Reset status to PENDING
     };
     
     // If a new file is uploaded, handle it
     if (req.file) {
-      // Delete the old file from local storage
-      const oldFilePath = path.join(__dirname, '..', deliverable.path);
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath);
+      // Delete the old file from Cloudinary
+      if (deliverable.publicId) {
+        await deleteFromCloudinary(deliverable.publicId);
       }
       
-      // Upload the new file
-      const { fileUrl, path: filePath } = await uploadToLocal(req.file);
+      // Upload the new file to Cloudinary
+      const { fileUrl, publicId } = await uploadToCloudinary(req.file);
       updateData.fileUrl = fileUrl;
-      updateData.path = filePath;
+      updateData.publicId = publicId;
     }
     
     // Update the deliverable
@@ -211,6 +223,7 @@ export const updateDeliverable = async (req, res) => {
       id,
       updateData,
       { new: true, runValidators: true }
+
     );
     
     res.status(200).json({
@@ -225,59 +238,61 @@ export const updateDeliverable = async (req, res) => {
   }
 };
 
+
 // Review deliverable (approve or reject) - for clients
-export const reviewDeliverable = async (req, res) => {
+export const   reviewDeliverable = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, feedback } = req.body;
-    
+
     // Validate status
     if (!['APPROVED', 'REJECTED'].includes(status)) {
       return res.status(400).json({ message: 'Status must be either APPROVED or REJECTED' });
     }
-    
+
     const deliverable = await Deliverable.findById(id);
     if (!deliverable) {
       return res.status(404).json({ message: 'Deliverable not found' });
     }
-    
+
     // Get the order to check if user is the client
     const order = await Order.findById(deliverable.orderId);
     if (!order) {
       return res.status(404).json({ message: 'Associated order not found' });
     }
-    
+
     // Only the client can review deliverables
     if (order.client.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Only the client can review deliverables' });
     }
-    
+
     // Update deliverable status
     deliverable.status = status;
     deliverable.feedback = feedback;
     deliverable.reviewedAt = new Date();
-    
+
     await deliverable.save();
-    
+
     // If approved, update order status to completed
     if (status === 'APPROVED') {
       order.status = 'completed';
       await order.save();
+
     } 
     // If rejected, increment revision count and update order status
     else if (status === 'REJECTED') {
       order.revisionCount += 1;
       order.status = 'revision';
-      
+
       // Check if max revisions reached
       if (order.revisionCount >= order.maxRevisions) {
-        // Additional logic if needed for max revisions
-        // Perhaps notify admin or handle differently
+        order.status = 'completed'; 
+        await order.save();
       }
-      
+
       await order.save();
     }
-    
+
     res.status(200).json({
       success: true,
       data: deliverable
@@ -289,7 +304,6 @@ export const reviewDeliverable = async (req, res) => {
     });
   }
 };
-
 // Delete a deliverable (if it's still pending)
 export const deleteDeliverable = async (req, res) => {
   try {
@@ -310,10 +324,9 @@ export const deleteDeliverable = async (req, res) => {
       return res.status(400).json({ message: 'Cannot delete a deliverable that has been reviewed' });
     }
     
-    // Delete the file from local storage
-    const filePath = path.join(__dirname, '..', deliverable.path);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Delete the file from Cloudinary
+    if (deliverable.publicId) {
+      await deleteFromCloudinary(deliverable.publicId);
     }
     
     // Delete the deliverable from the database
@@ -368,7 +381,8 @@ export const getFileUrl = async (req, res) => {
   }
 };
 
-// Download file directly
+// Download file directly - Cloudinary provides direct download URLs, no need for this method
+// but keeping it for compatibility, redirecting to the Cloudinary URL
 export const downloadFile = async (req, res) => {
   try {
     const { id } = req.params;
@@ -392,16 +406,12 @@ export const downloadFile = async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to access this file' });
     }
     
-    // Get the file path from server root
-    const filePath = path.join(__dirname, '..', deliverable.path);
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File not found on server' });
+    // Redirect to the Cloudinary URL
+    if (!deliverable.fileUrl) {
+      return res.status(404).json({ message: 'File URL not found' });
     }
     
-    // Send the file for download
-    res.download(filePath);
+    res.redirect(deliverable.fileUrl);
   } catch (error) {
     res.status(500).json({
       success: false,

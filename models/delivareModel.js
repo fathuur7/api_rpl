@@ -13,18 +13,14 @@ const deliverableSchema = new Schema({
     ref: 'User',
     required: true,
   },
-  title: {
-    type: String,
-    required: true,
-  },
+  title: String,
   description: String,
   fileUrl: {
     type: String,
     required: true,
   },
   path: {
-    type: String,
-    required: true,
+    type: String
   },
   status: {
     type: String,

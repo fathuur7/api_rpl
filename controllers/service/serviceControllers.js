@@ -127,4 +127,33 @@ export const updateServiceRequest =  async (req, res) => {
   }
 }
 
+// for client email notification for designer want to update deadline
+export const updateDeadline = async (req, res) => {
+  try {
+    const serviceId = req.params.id;
+    
+    // Find the service by ID
+    const service = await Service.findById(serviceId);
+    
+    if (!service) {
+      return res.status(404).json({ msg: 'Service not found' });
+    }
+    
+    // Check if user is authorized to update deadline (should be the client)
+    if (service.client && service.client.toString() !== req.user.id) {
+      return res.status(403).json({ msg: 'Not authorized to update deadline' });
+    }
+    
+    // Update deadline
+    service.deadline = req.body.deadline;
+    await service.save();
+    
+    res.json({ msg: 'Deadline successfully updated' });
+    
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
 // get
