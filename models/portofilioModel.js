@@ -13,7 +13,7 @@ const portfolioSchema = new Schema({
     required: true,
   },
   title: {
-    type: String, //kontlhvhvh
+    type: String, // Judul portofolio
     required: true,
   },
 }, {
