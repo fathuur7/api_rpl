@@ -1,6 +1,7 @@
 // controllers/deliverableController.js
 import Deliverable from '../../models/delivareModel.js';
 import Order from '../../models/orderModel.js';
+import Portfolio from '../../models/portofilioModel.js';
 import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
 import { NotifyDeliverableStatusEmail } from '../../config/email.js';
@@ -238,6 +239,29 @@ export const updateDeliverable = async (req, res) => {
   }
 };
 
+// Helper function to create portfolio entry
+const createPortfolioEntry = async (deliverable, order) => {
+  try {
+    // Check if portfolio entry already exists for this deliverable
+    const existingPortfolio = await Portfolio.findOne({ deliverable: deliverable._id });
+    if (existingPortfolio) {
+      logger.info(`Portfolio already exists for deliverable ${deliverable._id}`);
+      return;
+    }
+
+    // Create new portfolio entry
+    const portfolioEntry = new Portfolio({
+      user: deliverable.desainer,
+      deliverable: deliverable._id,
+      title: deliverable.title || `Work for ${order.title || 'Order ' + order._id}`
+    });
+
+    await portfolioEntry.save();
+    logger.info(`Portfolio created for deliverable ${deliverable._id} by designer ${deliverable.desainer}`);
+  } catch (error) {
+    logger.error(`Failed to create portfolio entry: ${error.message}`);
+  }
+};
 
 // Review deliverable (approve or reject) - for clients
 export const reviewDeliverable = async (req, res) => {
@@ -273,11 +297,13 @@ export const reviewDeliverable = async (req, res) => {
 
     await deliverable.save();
 
-    // If approved, update order status to completed
+    // If approved, update order status to completed and create portfolio entry
     if (status === 'APPROVED') {
       order.status = 'completed';
       await order.save();
-
+      
+      // Create portfolio entry for the approved deliverable
+      await createPortfolioEntry(deliverable, order);
     } 
     // If rejected, increment revision count and update order status
     else if (status === 'REJECTED') {

@@ -23,6 +23,7 @@ import designerServiceRoutes from "./routes/service/serviceDesainerRoutes.js";
 import orderRoutes from "./routes/orders/orderRoutes.js";
 import paymentRoutes from "./routes/payment/paymentRoutes.js";
 import deliverableRoutes from "./routes/delivare/delivRoutes.js";
+import portfolioRoutes from "./routes/portfolio/portfolioRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -113,6 +114,8 @@ if (!isProduction) {
   });
 }
 
+// test
+
 // Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', environment: process.env.NODE_ENV });
@@ -133,6 +136,7 @@ apiRoutes.use('/designer', designerServiceRoutes);
 apiRoutes.use('/orders', orderRoutes);
 apiRoutes.use('/payments', paymentRoutes);
 apiRoutes.use('/deliverables', deliverableRoutes);
+apiRoutes.use('/portfolios', portfolioRoutes);
 
 
 // Apply API routes with versioning
