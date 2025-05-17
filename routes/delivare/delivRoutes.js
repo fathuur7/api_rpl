@@ -12,6 +12,7 @@ import {
   getFileUrl,
   downloadFile,
   getDesignerDeliverables,
+  trackFileDownload,
   getClientDeliverables
 } from '../../controllers/delivare/delivareController.js';
 
@@ -40,6 +41,7 @@ router.put('/:id', upload.single('file'), updateDeliverable);
 router.patch('/:id/review', reviewDeliverable);
 router.delete('/:id', deleteDeliverable);
 router.get('/:id/fileUrl' ,getFileUrl);
+router.get('/:id/track', trackFileDownload);
 router.get('/:id/download', downloadFile);
 
 export default router;

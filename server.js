@@ -63,7 +63,7 @@ app.use(morgan(isProduction ? 'combined' : 'dev'));
 
 // CORS configuration
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: "http://localhost:3000" || "https://res.cloudinary.com",
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ["GET", "POST", "PUT", "DELETE" , "PATCH"],
   credentials: true,

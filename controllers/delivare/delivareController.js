@@ -77,7 +77,7 @@ export const createDeliverable = async (req, res) => {
     // Create deliverable
     const deliverable = new Deliverable({
       orderId,
-      desainer: req.user._id, // From the authenticated user
+      desainer: req.user._id,
       title,
       description,
       fileUrl,
@@ -240,7 +240,7 @@ export const updateDeliverable = async (req, res) => {
 
 
 // Review deliverable (approve or reject) - for clients
-export const   reviewDeliverable = async (req, res) => {
+export const reviewDeliverable = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, feedback } = req.body;
@@ -304,6 +304,7 @@ export const   reviewDeliverable = async (req, res) => {
     });
   }
 };
+
 // Delete a deliverable (if it's still pending)
 export const deleteDeliverable = async (req, res) => {
   try {
@@ -368,21 +369,28 @@ export const getFileUrl = async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to access this file' });
     }
     
-    // Return the file URL
+    // Make sure the file URL exists
+    if (!deliverable.fileUrl) {
+      return res.status(404).json({ message: 'File URL not found for this deliverable' });
+    }
+    
+    // Return the file URL with proper cache control headers
+    res.set('Cache-Control', 'private, max-age=300'); // 5 minutes cache
     res.status(200).json({
       success: true,
-      fileUrl: deliverable.fileUrl
+      fileUrl: deliverable.fileUrl,
+      fileName: deliverable.fileName || 'download'
     });
   } catch (error) {
+    console.error('Error getting file URL:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Failed to retrieve file URL: ' + error.message
     });
   }
 };
 
-// Download file directly - Cloudinary provides direct download URLs, no need for this method
-// but keeping it for compatibility, redirecting to the Cloudinary URL
+// Download file endpoint - modified to handle Cloudinary properly
 export const downloadFile = async (req, res) => {
   try {
     const { id } = req.params;
@@ -406,16 +414,91 @@ export const downloadFile = async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to access this file' });
     }
     
-    // Redirect to the Cloudinary URL
+    // Check if file URL exists
     if (!deliverable.fileUrl) {
-      return res.status(404).json({ message: 'File URL not found' });
+      return res.status(404).json({ message: 'File URL not found for this deliverable' });
     }
     
-    res.redirect(deliverable.fileUrl);
+    // Track the download
+    deliverable.downloadCount = (deliverable.downloadCount || 0) + 1;
+    deliverable.lastDownloadedAt = new Date();
+    await deliverable.save();
+    
+    // Instead of redirecting to Cloudinary directly, proxy the file through our server
+    // to avoid CORS issues
+    try {
+      // Get the file from Cloudinary
+      const fetch = await import('node-fetch');
+      const response = await fetch.default(deliverable.fileUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch from Cloudinary: ${response.status} ${response.statusText}`);
+      }
+      
+      // Get the content type and other headers
+      const contentType = response.headers.get('content-type');
+      const contentLength = response.headers.get('content-length');
+      
+      // Extract filename from the URL or use the one in the database
+      const fileName = deliverable.fileName || 
+                      decodeURIComponent(deliverable.fileUrl.split('/').pop().split('?')[0]) || 
+                      `deliverable-${id}`;
+      
+      // Set headers for the download
+      res.setHeader('Content-Type', contentType);
+      if (contentLength) {
+        res.setHeader('Content-Length', contentLength);
+      }
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      
+      // Pipe the response from Cloudinary to our response
+      const fileStream = response.body;
+      fileStream.pipe(res);
+      
+    } catch (error) {
+      console.error('Error proxying file from Cloudinary:', error);
+      
+      // Fall back to returning the URL if proxying fails
+      res.status(200).json({
+        success: true,
+        fileUrl: deliverable.fileUrl,
+        fileName: deliverable.fileName || `deliverable-${id}`
+      });
+    }
   } catch (error) {
+    console.error('Error downloading file:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Failed to download file: ' + error.message
+    });
+  }
+};
+
+// Method for just tracking downloads
+export const trackFileDownload = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find the deliverable
+    const deliverable = await Deliverable.findById(id);
+    if (!deliverable) {
+      return res.status(404).json({ message: 'Deliverable not found' });
+    }
+    
+    // Update download count
+    deliverable.downloadCount = (deliverable.downloadCount || 0) + 1;
+    deliverable.lastDownloadedAt = new Date();
+    await deliverable.save();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Download tracked successfully'
+    });
+  } catch (error) {
+    console.error('Error tracking download:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to track download: ' + error.message
     });
   }
 };
@@ -450,7 +533,7 @@ export const getClientDeliverables = async (req, res) => {
     // Then find all deliverables for these orders
     const deliverables = await Deliverable.find({ orderId: { $in: orderIds } })
       .sort({ submittedAt: -1 })
-      .populate('orderId', 'service status')
+      .populate('orderId', 'service status revisionCount')
       .populate('desainer', 'name');
     
     res.status(200).json({
