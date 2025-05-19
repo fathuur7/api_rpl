@@ -77,7 +77,7 @@ export const getAllPortfolios = async (req, res) => {
   }
 };
 
-// Get portfolio by ID
+// Get portfolio by ID (including deliverable details)
 export const getPortfolioById = async (req, res) => {
   try {
     const portfolio = await Portfolio.findById(req.params.id)
