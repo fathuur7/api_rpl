@@ -84,7 +84,7 @@ export const getPortfolioById = async (req, res) => {
       .populate('user', 'name email profilePicture')
       .populate({
         path: 'deliverable',
-        select: 'title description fileUrl feedback status submittedAt',
+        select: 'orderId title description fileUrl feedback status submittedAt',
         populate: {
           path: 'orderId',
           select: 'title category description'
