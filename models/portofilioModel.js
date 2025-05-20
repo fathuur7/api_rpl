@@ -14,8 +14,8 @@ const portfolioSchema = new Schema({
   },
   title: {
     type: String, // Judul portofolio
-    required: true,
-  },
+     required: true,
+   },
 }, {
   timestamps: true,
 });
