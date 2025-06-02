@@ -14,8 +14,18 @@ const portfolioSchema = new Schema({
   },
   title: {
     type: String, // Judul portofolio
-     required: true,
-   },
+    required: true,
+  },
+  comment: {
+    type: String, // Deskripsi atau komentar tentang portofolio
+    required: true,
+  },  
+  rating: {
+    type: Number, // Rating dari 1 sampai 5
+    min: 1,
+    max: 5,
+    required: true,
+  }, 
 }, {
   timestamps: true,
 });
