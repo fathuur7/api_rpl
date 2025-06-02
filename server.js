@@ -8,7 +8,7 @@ import MongoStore from 'connect-mongo';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
-import { rateLimit } from 'express-rate-limit';
+// import { rateLimit } from 'express-rate-limit';
 
 // Configuration imports
 import connectDB from "./config/db.js";
@@ -42,14 +42,14 @@ app.use(helmet()); // Helps secure Express apps by setting HTTP headers
 app.disable('x-powered-by'); // Reduces fingerprinting
 
 // Rate limiting to prevent abuse
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: 'Too many requests from this IP, please try again later.'
-});
-app.use('/api/', limiter);
+// const limiter = rateLimit({
+//   // windowMs: 15 * 60 * 1000, // 15 minutes
+//   // max: 100, // Limit each IP to 100 requests per windowMs
+//   // standardHeaders: true,
+//   // legacyHeaders: false,
+//   // message: 'Too many requests from this IP, please try again later.'
+// });
+// app.use('/api');
 
 // Request parsing
 app.use(express.json({ limit: '50mb' }));

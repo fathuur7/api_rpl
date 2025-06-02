@@ -47,6 +47,10 @@ const authController = {
       const verificationLink = `http://localhost:3000/auth/makeSure/${verificationToken}`;
       sendVerificationEmail(email, verificationLink);
 
+      if(!newUser) {
+        return res.status(400).json({ message: 'Failed to create user' });
+      }
+
       res.status(201).json({
           message: 'User registered successfully. Please check your email for verification.',
           user: {
