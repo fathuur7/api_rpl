@@ -199,7 +199,7 @@ export const getPublicPortfolioDetails = async (req, res) => {
     const averageRating = ratings.length > 0 
       ? ratings.reduce((sum, rating) => sum + rating.rating, 0) / ratings.length 
       : 0;
-
+    const thumbnailUrl = portfolio.deliverable?.fileUrl || null;
     // Rating distribution
     const ratingDistribution = [1, 2, 3, 4, 5].map(star => ({
       star,
@@ -229,6 +229,7 @@ export const getPublicPortfolioDetails = async (req, res) => {
       _id: portfolio._id,
       title: portfolio.title,
       description: portfolio.description,
+      thumbnailUrl,
       tags: portfolio.tags,
       user: portfolio.user,
       deliverable: portfolio.deliverable,
